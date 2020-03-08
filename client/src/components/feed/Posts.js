@@ -6,7 +6,7 @@ import {
   feedSetNewState,
   setTotalCount,
 } from '../../lib/feed';
-
+import { requestCookiesId } from '../../lib/user';
 import { useInView } from 'react-intersection-observer';
 import Content from './Content/Content';
 import NewComments from './Comment/NewComments';
@@ -16,6 +16,7 @@ import likeFalse from './img/false.svg';
 
 const Posts = props => {
   const [number, setNumber] = useState(0);
+  const [renderingKey, setRenderingKey] = useState(false);
   const [ref, inView, entry] = useInView({ triggerOnce: true });
   const dispatch = useDispatch();
 
@@ -42,8 +43,20 @@ const Posts = props => {
     }
   }, [inView]);
 
+  useEffect(() => {
+    requestCookiesId().then(resolve => {
+      if (!resolve.data) {
+        window.location.replace(`http://localhost:3000/login`);
+      } else {
+        setRenderingKey(true);
+      }
+    });
+  }, []);
+
   const onClickExit = () => {
-    dispatch(removeCookiesId());
+    dispatch(removeCookiesId()).then(resolve => {
+      window.location.replace(`http://localhost:3000/login`);
+    });
   };
 
   const listComment = (list, userId) => {
@@ -88,8 +101,14 @@ const Posts = props => {
 
   return (
     <>
-      <button onClick={onClickExit}>выход</button>
-      {listPosts()}
+      {renderingKey ? (
+        <>
+          <button onClick={onClickExit}>выход</button>
+          {listPosts()}{' '}
+        </>
+      ) : (
+        <></>
+      )}
     </>
   );
 };

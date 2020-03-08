@@ -7,12 +7,16 @@ const Entrance = props => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cookie, setCookie] = useState('');
+  const [renderingKey, setRenderingKey] = useState(false);
   const [windowError, setWindowError] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
     requestCookiesId().then(resolve => {
       setCookie(resolve.data);
+      if (!resolve.data) {
+        setRenderingKey(true);
+      }
     });
   }, []);
 
@@ -47,28 +51,34 @@ const Entrance = props => {
   }
 
   return (
-    <form onSubmit={onSubmitForm}>
-      <input
-        name="email"
-        type="email"
-        placeholder="Your Email"
-        onChange={onChangeEmail}
-        value={email}
-      />
-      <input
-        name="password"
-        type="password"
-        required
-        minLength="6"
-        maxLength="20"
-        placeholder="Your Password"
-        onChange={onChangePassword}
-        value={password}
-      />
-      <a href="/register">Зарегистрироваться</a>
-      {windowError && <p>пароль или Email введен неверно</p>}
-      <button> Вход </button>
-    </form>
+    <>
+      {renderingKey ? (
+        <form onSubmit={onSubmitForm}>
+          <input
+            name="email"
+            type="email"
+            placeholder="Your Email"
+            onChange={onChangeEmail}
+            value={email}
+          />
+          <input
+            name="password"
+            type="password"
+            required
+            minLength="6"
+            maxLength="20"
+            placeholder="Your Password"
+            onChange={onChangePassword}
+            value={password}
+          />
+          <a href="/register">Зарегистрироваться</a>
+          {windowError && <p>пароль или Email введен неверно</p>}
+          <button> Вход </button>
+        </form>
+      ) : (
+        <></>
+      )}{' '}
+    </>
   );
 };
 

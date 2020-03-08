@@ -1,7 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-//import './index.css';
-//import App from './App';
 //import * as serviceWorker from './serviceWorker';
 import store from './store-redux';
 import { BrowserRouter, Redirect, Route } from 'react-router-dom';
@@ -16,10 +14,14 @@ const rerender = store => {
     <BrowserRouter>
       <Provider store={store}>
         <section className="section">
+          {document.location.pathname.length > 1 ? (
+            <></>
+          ) : (
+            <Redirect from="/" to="/login" />
+          )}
           <Route path="/feed" render={() => <Posts />} />
           <Route path="/register" render={() => <Registration />} />
-          <Route path="/login" render={() => <Entrance />} />
-          {/*<Redirect from="/" to="/entrance" />*/}
+          <Route path="/login" render={() => <Entrance />} />{' '}
         </section>
       </Provider>
     </BrowserRouter>,
