@@ -9,7 +9,9 @@ const jsonParser = express.json();
 function readFile(path, data) {
   return new Promise((resolve, reject) =>
     fs.readFile(path, data, (err, usersRaw) => {
-      if (err) reject(err);
+      if (err) {
+        reject(err);
+      }
       resolve(usersRaw);
     })
   );
@@ -18,10 +20,31 @@ function readFile(path, data) {
 function writeFile(path, arr) {
   return new Promise((resolve, reject) =>
     fs.writeFile(path, arr, err => {
-      if (err) reject(err);
+      if (err) {
+        reject(err);
+      }
       resolve();
     })
   );
+}
+
+function workWithFiles(usersRaw) {
+  const objJson = JSON.parse(usersRaw);
+  const obj = request.body;
+  const checkingValidity = objJson.some(item => obj.email == item.email);
+  obj.id = objJson.length + 1;
+
+  if (checkingValidity) {
+    response.status(400).json({ error: "Данный email уже используется" });
+  } else {
+    objJson.push(obj);
+    writeFile(path, JSON.stringify(objJson));
+    response.cookie("id", obj.id.toString(), {
+      maxAge: 2.592e9,
+      httpOnly: true
+    });
+    response.send(obj);
+  }
 }
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
@@ -49,45 +72,40 @@ app.get("/portionPosts", async function(request, response) {
 });
 
 app.post("/entrance", jsonParser, async function(request, response) {
-  const usersRaw = await readFile("file_JSON/инфа_о_клиентах.json", "utf8");
-  const objJson = JSON.parse(usersRaw);
-  const obj = request.body;
-  let index;
-  const checkingValidity = objJson.some(item =>
-    obj.email === item.email && obj.password === item.password
-      ? (index = item.id)
-      : index
-  );
+  try {
+    const usersRaw = await readFile("file_JSON/userInformation.json", "utf8");
+    const objJson = JSON.parse(usersRaw);
+    const obj = request.body;
+    const checkingValidity = objJson.some(item =>
+      obj.email === item.email && obj.password === item.password
+        ? (obj.id = item.id)
+        : undefined
+    );
 
-  if (checkingValidity) {
-    obj.id = index;
-    response.cookie("id", obj.id.toString(), {
-      maxAge: 2.592e9,
-      httpOnly: true
-    });
-    response.send(obj);
-  } else {
+    if (checkingValidity) {
+      response.cookie("id", obj.id.toString(), {
+        maxAge: 2.592e9,
+        httpOnly: true
+      });
+      response.send(obj);
+    } else {
+      response.status(400).send({ error: "Email или пароль введены неверно" });
+    }
+  } catch {
     response.status(400).send({ error: "Email или пароль введены неверно" });
   }
 });
 
 app.post("/registration", jsonParser, async function(request, response) {
-  const usersRaw = await readFile("file_JSON/инфа_о_клиентах.json", "utf8");
-  const objJson = JSON.parse(usersRaw);
-  const obj = request.body;
-  const checkingValidity = objJson.some(item => obj.email == item.email);
-  obj.id = objJson.length + 1;
+  const path = "file_JSON/userInformation.json";
 
-  if (checkingValidity) {
-    response.status(400).json({ error: "Данный email уже используется" });
-  } else {
-    objJson.push(obj);
-    writeFile("file_JSON/инфа_о_клиентах.json", JSON.stringify(objJson));
-    response.cookie("id", obj.id.toString(), {
-      maxAge: 2.592e9,
-      httpOnly: true
-    });
-    response.send(obj);
+  try {
+    const usersRaw = await readFile(path, "utf8");
+    workWithFiles(usersRaw);
+  } catch {
+    const startInfoFile = [];
+    await writeFile(path, JSON.stringify(startInfoFile));
+    workWithFiles(JSON.stringify(startInfoFile));
   }
 });
 
